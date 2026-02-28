@@ -7,8 +7,9 @@
     "deploy:factory": "node deploy-factory.mjs"
   },
   "dependencies": {
-    "@btc-vision/bitcoin":     "latest",
+    "@bitcoinerlab/secp256k1": "^1.2.0",
+    "@btc-vision/bitcoin": "latest",
     "@btc-vision/transaction": "latest",
-    "opnet":                   "latest"
+    "opnet": "latest"
   }
 }
