@@ -34,7 +34,90 @@ console.log(`\n🚀 MEMESLOTS Factory Deploy`);
 console.log(`Network : ${NETWORK_STR.toUpperCase()}`);
 console.log(`RPC     : ${RPC_URL}`);
 
+const provider = new Jimport { JSONRpcProvider, DeploymentTransaction } from 'opnet';
+import { EcKeyPair } from '@btc-vision/transaction';
+import { networks, initEccLib } from '@btc-vision/bitcoin';
+import * as ecc from '@bitcoinerlab/secp256k1';
+import fs from 'fs';
+
+initEccLib(ecc);
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const NETWORK_STR = (process.env.NETWORK || 'testnet').toLowerCase();
+const TREASURY    = process.env.TREASURY || '';
+
+if (!PRIVATE_KEY) {
+  console.error('PRIVATE_KEY is required');
+  process.exit(1);
+}
+
+const NETWORK = NETWORK_STR === 'mainnet' ? networks.bitcoin : networks.testnet;
+const RPC_URL = NETWORK_STR === 'mainnet' ? 'https://mainnet.opnet.org' : 'https://testnet.opnet.org';
+
+console.log('\n MEMESLOTS Factory Deploy');
+console.log('Network : ' + NETWORK_STR.toUpperCase());
+console.log('RPC     : ' + RPC_URL);
+
 const provider = new JSONRpcProvider(RPC_URL, NETWORK);
+
+let keypair;
+try {
+  keypair = EcKeyPair.fromWIF(PRIVATE_KEY, NETWORK);
+} catch (e) {
+  console.error('Cannot read PRIVATE_KEY: ' + e.message);
+  process.exit(1);
+}
+
+const address  = EcKeyPair.getTaprootAddress(keypair, NETWORK);
+const treasury = TREASURY || address;
+console.log('Deployer: ' + address);
+console.log('Treasury: ' + treasury);
+
+const wasmPath = '../contracts/build/MemeFactoryV2.wasm';
+if (!fs.existsSync(wasmPath)) {
+  console.error('WASM not found: ' + wasmPath);
+  process.exit(1);
+}
+const wasmBytes = fs.readFileSync(wasmPath);
+console.log('WASM    : ' + wasmBytes.length + ' bytes');
+
+const calldata = Buffer.alloc(32);
+Buffer.from(treasury, 'utf8').copy(calldata, 0, 0, Math.min(32, treasury.length));
+
+console.log('Deploying MemeFactoryV2...');
+
+let factoryAddress;
+try {
+  const deployTx = new DeploymentTransaction({
+    signer:                   keypair,
+    refundTo:                 address,
+    maximumAllowedSatToSpend: 150_000n,
+    feeRate:                  10,
+    network:                  NETWORK,
+    bytecode:                 wasmBytes,
+    calldata:                 calldata,
+  });
+  const result = await deployTx.signAndBroadcast(provider);
+  factoryAddress = result.contractAddress;
+  console.log('Deployed! Contract: ' + factoryAddress);
+  console.log('TXID: ' + result.txid);
+} catch (e) {
+  console.error('Deploy failed: ' + e.message);
+  process.exit(1);
+}
+
+const result = { network: NETWORK_STR, deployedAt: new Date().toISOString(), deployer: address, treasury, MemeFactoryV2: factoryAddress };
+fs.writeFileSync('deployed.json', JSON.stringify(result, null, 2));
+
+const htmlPath = '../web/index.html';
+if (fs.existsSync(htmlPath)) {
+  let html = fs.readFileSync(htmlPath, 'utf8');
+  const patched = html.replace(/FACTORY:\s*['"][^'"]*['"]/, "FACTORY: '" + factoryAddress + "'");
+  if (patched !== html) { fs.writeFileSync(htmlPath, patched); console.log('Patched index.html'); }
+}
+
+fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'factory_address=' + factoryAddress + '\n');
+console.log('Done!');SONRpcProvider(RPC_URL, NETWORK);
 
 let keypair;
 try {
@@ -105,8 +188,7 @@ try {
   process.exit(1);
 }
 
-const result = { network: NETWORK_STR, deployedAt: new Date().toISOString(), deployer: address, treasury, MemeFactoryV2: factoryAddress };
-fs.writeFileSync('deployed.json', JSON.stringify(result, null, 2));
+const result = { network: NETWORK_STR, deployedAt: new Date().toISOString(), deployer: address, treasury, MemeFactoryVfs.writeFileSync('deployed.json', JSON.stringify(result, null, 2));
 console.log(`\n📄 Saved: deployed.json`);
 
 const htmlPath = '../web/index.html';
@@ -117,4 +199,5 @@ if (fs.existsSync(htmlPath)) {
 }
 
 fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', `factory_address=${factoryAddress}\n`);
-console.log(`\n✨ Done!`);
+console.log(`\n✨ Done
+
