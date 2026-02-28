@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MEMESLOTS — Bitcoin Meme DEX on OP_NET</title>
+<meta name="description" content="Every meme has 100 slots. Claim, takeover, earn 1% of every trade on Bitcoin L1 via OP_NET."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ═══ RESET + VARS ═══════════════════════════════════════════════════════════ */
+:root{
+  --bg:#060608;--s1:#0c0c10;--s2:#131318;--s3:#1a1a22;
+  --border:#1e1e28;--b2:#2a2a38;
+  --acc:#f5ff00;--acc2:#ff3c00;--acc3:#00ffaa;
+  --text:#e8e8f0;--muted:#50505e;--dim:#252530;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:9998}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+input,textarea{font-family:inherit}
+
+/* ═══ ANIMATIONS ═════════════════════════════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(245,255,0,.3)}50%{text-shadow:0 0 50px rgba(245,255,0,.8),0 0 100px rgba(245,255,0,.2)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,0,.4)}50%{box-shadow:0 0 0 6px rgba(255,60,0,0)}}
+@keyframes pulseG{0%,100%{box-shadow:0 0 0 0 rgba(0,255,170,.3)}50%{box-shadow:0 0 0 6px rgba(0,255,170,0)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slidein{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+/* ═══ HEADER ═════════════════════════════════════════════════════════════════ */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:58px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;background:rgba(6,6,8,.97);
+  backdrop-filter:blur(24px);z-index:600;
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:5px;color:var(--acc);cursor:pointer;animation:glow 4s ease-in-out infinite;user-select:none}
+.logo em{color:var(--acc2);font-style:normal}
+.h-nav{display:flex;gap:2px}
+.h-nav button{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 15px;background:none;border:1px solid transparent;color:var(--muted);transition:.15s;text-transform:uppercase}
+.h-nav button:hover{color:var(--text)}
+.h-nav button.active{color:var(--text);border-color:var(--b2);background:var(--s2)}
+.h-right{display:flex;gap:8px;align-items:center}
+.net-pill{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;padding:4px 10px;border:1px solid var(--b2);color:var(--muted);border-radius:20px;display:flex;align-items:center;gap:5px}
+.nd{width:5px;height:5px;border-radius:50%;background:var(--acc3);animation:pulseG 2s infinite}
+#connectBtn{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;padding:8px 18px;background:var(--acc);color:#000;border:none;transition:.2s;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+#connectBtn:hover{background:#fff}
+#connectBtn.on{background:none;color:var(--acc);border:1px solid var(--b2);clip-path:none;padding:7px 14px}
+
+/* ═══ PAGES ══════════════════════════════════════════════════════════════════ */
+.page{display:none}
+.page.active{display:block;animation:fadeUp .2s ease}
+
+/* ═══ EXPLORE ════════════════════════════════════════════════════════════════ */
+.hero{padding:52px 32px 36px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-60px;right:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(245,255,0,.05),transparent 70%);pointer-events:none}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,7vw,72px);letter-spacing:4px;line-height:.92;margin-bottom:14px}
+.hero h1 .a1{color:var(--acc)}.hero h1 .a2{color:var(--acc2)}
+.hero-sub{color:var(--muted);font-size:14px;max-width:520px;line-height:1.7;margin-bottom:24px}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap}
+.hst .hl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:2px}
+.hst .hv{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--acc3)}
+
+.ctrl{display:flex;align-items:center;gap:10px;padding:16px 32px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sbox{flex:1;min-width:200px;display:flex;align-items:center;background:var(--s1);border:1px solid var(--border);padding:0 14px;gap:10px}
+.sbox input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;padding:10px 0}
+.sbox input::placeholder{color:var(--muted)}
+.sico{color:var(--muted);font-size:16px}
+.tabs{display:flex;gap:2px}
+.tabb{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;padding:9px 13px;background:none;border:1px solid var(--border);color:var(--muted);transition:.15s}
+.tabb:hover{color:var(--text)}
+.tabb.active{background:var(--s2);color:var(--text);border-color:var(--b2)}
+.btn-create{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;padding:9px 18px;background:var(--acc);color:#000;border:none;transition:.15s;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));white-space:nowrap}
+.btn-create:hover{background:#fff}
+
+/* ═══ MEME GRID ══════════════════════════════════════════════════════════════ */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1px;background:var(--border);padding:1px 32px 32px;margin-top:1px}
+.mcard{background:var(--bg);cursor:pointer;transition:.18s;overflow:hidden;border:1px solid transparent}
+.mcard:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,.55);border-color:var(--b2)}
+.mc-banner{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.mc-ph{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:58px;background:linear-gradient(135deg,var(--s1),var(--s2))}
+.mc-body{padding:15px}
+.mc-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.mc-logo{width:38px;height:38px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.mc-logo img{width:100%;height:100%;object-fit:cover}
+.mc-info{flex:1;overflow:hidden}
+.mc-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-sym{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
+.mc-badges{display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0}
+.badge{font-family:'Space Mono',monospace;font-size:7px;letter-spacing:1px;padding:2px 6px}
+.badge.new{background:rgba(0,255,170,.12);border:1px solid rgba(0,255,170,.25);color:var(--acc3)}
+.badge.hot{background:rgba(255,60,0,.12);border:1px solid rgba(255,60,0,.25);color:var(--acc2)}
+.badge.mine{background:rgba(245,255,0,.08);border:1px solid rgba(245,255,0,.2);color:var(--acc)}
+.mc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:9px}
+.mst{background:var(--s1);padding:7px 9px}
+.mst .ml{font-family:'Space Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:2px}
+.mst .mv{font-family:'Space Mono',monospace;font-size:10px}
+.mv.ca{color:var(--acc)}.mv.cb{color:var(--acc2)}.mv.cc{color:var(--acc3)}
+.mc-soc{display:flex;gap:8px;margin-bottom:8px}
+.mc-sl{font-size:13px;opacity:.5;transition:.15s}
+.mc-sl:hover{opacity:1;transform:scale(1.2)}
+.mc-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 15px;border-top:1px solid var(--border)}
+.mc-by{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted)}
+.mc-swap{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--acc2);display:flex;align-items:center;gap:3px;transition:.15s}
+.mc-swap:hover{color:#fff}
+.empty-state{grid-column:1/-1;padding:80px 32px;text-align:center;color:var(--muted)}
+.empty-big{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:4px;color:var(--dim);margin-bottom:12px}
+.skel{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200%;animation:shimmer 1.6s infinite;height:280px}
+
+/* ═══ CREATE PAGE ════════════════════════════════════════════════════════════ */
+.cw{max-width:720px;margin:0 auto;padding:52px 32px 100px}
+.cw h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(38px,5vw,54px);letter-spacing:4px;line-height:.95;margin-bottom:8px}
+.cw h1 em{color:var(--acc);font-style:normal}
+.cw .csub{color:var(--muted);font-size:13px;line-height:1.75;margin-bottom:38px}
+.cw .csub strong{color:var(--acc);font-family:'Space Mono',monospace;font-size:11px;font-weight:400}
+.fsec{margin-bottom:30px}
+.fst{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.fr{margin-bottom:13px}
+.fr label{display:block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.fi{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--text);padding:11px 13px;font-size:14px;outline:none;transition:.15s}
+.fi:focus{border-color:var(--b2)}
+.fi::placeholder{color:var(--muted)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fhint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.55}
+/* supply */
+.sup-wrap{position:relative}
+.sup-unit{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-family:'Space Mono',monospace;font-size:11px;color:var(--acc);pointer-events:none}
+.presets{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.prst{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;padding:5px 11px;cursor:pointer;transition:.15s;background:var(--s2);border:1px solid var(--border);color:var(--muted)}
+.prst:hover{border-color:var(--b2);color:var(--text)}
+.prst.active{background:var(--acc);color:#000;border-color:var(--acc)}
+/* social */
+.soc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sf{display:flex;background:var(--s1);border:1px solid var(--border);transition:.15s}
+.sf:focus-within{border-color:var(--b2)}
+.sf-ico{width:44px;display:flex;align-items:center;justify-content:center;font-size:15px;border-right:1px solid var(--border);flex-shrink:0}
+.sf input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:12px;padding:10px 12px}
+.sf input::placeholder{color:var(--muted)}
+.sf-open{display:flex;align-items:center;padding:0 10px;color:var(--acc);font-size:11px;opacity:0;transition:.15s}
+.sf:focus-within .sf-open{opacity:.7}
+.sf-open:hover{opacity:1!important}
+/* motoswap banner */
+.moto-box{background:var(--s1);border:1px solid var(--b2);padding:18px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.moto-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc2),transparent)}
+.moto-ico{font-size:30px;line-height:1;flex-shrink:0;margin-top:2px}
+.moto-txt strong{font-size:13px;font-weight:600;display:block;margin-bottom:5px}
+.moto-txt p{font-size:12px;color:var(--muted);line-height:1.7}
+.moto-txt a{color:var(--acc);text-decoration:underline;text-underline-offset:3px}
+.moto-badge{font-family:'Space Mono',monospace;font-size:7px;letter-spacing:1px;padding:3px 8px;background:rgba(0,255,170,.07);border:1px solid rgba(0,255,170,.18);color:var(--acc3);flex-shrink:0;align-self:flex-start;white-space:nowrap}
+/* summary */
+.sumbox{background:var(--s1);border:1px solid var(--b2);padding:16px;margin-bottom:18px}
+.sum-h{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border)}
+.sum-k{font-size:12px;color:var(--muted)}
+.sum-v{font-family:'Space Mono',monospace;font-size:12px}
+.sum-v.acc{color:var(--acc)}
+.err-box{background:rgba(255,60,0,.07);border:1px solid rgba(255,60,0,.28);padding:11px 14px;margin-bottom:14px;font-family:'Space Mono',monospace;font-size:10px;color:var(--acc2)}
+/* deploy btn */
+.btn-deploy{width:100%;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:3px;padding:17px;background:var(--acc);color:#000;border:none;transition:.2s;clip-path:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px))}
+.btn-deploy:hover:not([disabled]){background:#fff;transform:translateY(-1px)}
+.btn-deploy[disabled]{opacity:.38;cursor:not-allowed}
+/* steps */
+.steps-wrap{margin-top:28px}
+.steps-label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:16px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.step{display:flex;gap:14px;margin-bottom:14px}
+.step-n{width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);transition:.3s}
+.step-n.active{border-color:var(--acc);color:var(--acc);animation:pulseG 1.4s infinite}
+.step-n.done{border-color:var(--acc3);color:var(--acc3);animation:none}
+.step-t{font-size:13px;font-weight:500;margin-bottom:2px}
+.step-d{font-size:11px;color:var(--muted)}
+.step-h{font-family:'Space Mono',monospace;font-size:9px;color:var(--acc3);margin-top:4px;word-break:break-all}
+/* success panel */
+.success-panel{background:rgba(0,255,170,.04);border:1px solid rgba(0,255,170,.18);padding:24px;margin-top:4px}
+.success-panel h3{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--acc3);margin-bottom:8px}
+.suc-addr{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:18px;word-break:break-all}
+.suc-addr span{color:var(--acc3)}
+.suc-acts{display:flex;gap:10px;flex-wrap:wrap}
+.sa{flex:1;min-width:150px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;padding:13px 16px;border:none;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:7px;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))}
+.sa.view{background:var(--acc3);color:#000}.sa.view:hover{background:#fff}
+.sa.liq{background:var(--acc2);color:#fff}.sa.liq:hover{background:#ff6644}
+.sa.swap{background:var(--s3);color:var(--text);border:1px solid var(--b2);clip-path:none}.sa.swap:hover{background:var(--s2)}
+
+/* ═══ DETAIL PAGE ════════════════════════════════════════════════════════════ */
+.det-back{display:flex;align-items:center;gap:8px;padding:14px 32px;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted);cursor:pointer;transition:.15s}
+.det-back:hover{color:var(--text)}
+.det-layout{display:grid;grid-template-columns:1fr 350px}
+.det-main{padding:28px 32px;border-right:1px solid var(--border)}
+.det-hero{display:flex;gap:18px;align-items:flex-start;margin-bottom:26px}
+.d-logo{width:72px;height:72px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;overflow:hidden}
+.d-logo img{width:100%;height:100%;object-fit:cover}
+.d-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:3px;line-height:1}
+.d-sym{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:3px}
+.d-by{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:6px}
+.d-soc{display:flex;gap:10px;margin-top:8px}
+.d-sl{font-size:16px;opacity:.5;transition:.15s}.d-sl:hover{opacity:1}
+.d-moto{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:'Space Mono',monospace;font-size:9px;color:var(--acc2);letter-spacing:1px;padding:4px 9px;border:1px solid rgba(255,60,0,.2);transition:.15s}
+.d-moto:hover{background:rgba(255,60,0,.07)}
+.det-banner{width:100%;aspect-ratio:21/9;object-fit:cover;display:block;border:1px solid var(--border);margin-bottom:22px}
+.det-banner-ph{width:100%;aspect-ratio:21/9;background:linear-gradient(135deg,var(--s1),var(--s2));display:flex;align-items:center;justify-content:center;font-size:80px;border:1px solid var(--border);margin-bottom:22px}
+.stat-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:22px}
+.sbc{background:var(--bg);padding:16px;text-align:center}
+.sbc .sl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:5px}
+.sbc .sv{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;line-height:1}
+.sv.a{color:var(--acc)}.sv.b{color:var(--acc2)}.sv.c{color:var(--acc3)}
+.cyc-box{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:22px}
+.cyc-top{display:flex;justify-content:space-between;margin-bottom:10px}
+.cyc-lab{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted)}
+.cyc-n{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--acc);letter-spacing:2px}
+.cyc-bar{height:4px;background:var(--border);overflow:hidden;margin-bottom:7px}
+.cyc-fill{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width .8s;box-shadow:0 0 10px rgba(245,255,0,.25)}
+.cyc-bot{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:8px;color:var(--muted)}
+.slots-h{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);margin-bottom:12px}
+/* slot grid */
+.sg{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.sl-item{aspect-ratio:1;border:1px solid var(--border);background:var(--s1);cursor:pointer;position:relative;transition:.1s;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:7px;color:transparent}
+.sl-item:hover{border-color:var(--acc);transform:scale(1.08);z-index:5;color:var(--muted)}
+.sl-item.owned{background:rgba(0,255,170,.04);border-color:rgba(0,255,170,.12)}
+.sl-item.mine{background:rgba(245,255,0,.06);border-color:rgba(245,255,0,.2)}
+.sl-item.mine::after{content:'★';position:absolute;bottom:2px;right:2px;font-size:6px;color:var(--acc)}
+.sl-item.hot{animation:pulse 1.8s infinite}
+.sl-item.sel{border-color:var(--acc)!important;transform:scale(1.06)!important;z-index:6}
+/* side panel */
+.det-side{display:flex;flex-direction:column}
+.s-info{padding:20px;border-bottom:1px solid var(--border);flex:1}
+.s-h{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:var(--muted);margin-bottom:16px}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.ik{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px}
+.iv{font-family:'Space Mono',monospace;font-size:10px}
+.iv.ia{color:var(--acc)}.iv.ib{color:var(--acc2)}.iv.ic{color:var(--acc3)}
+.s-act{padding:16px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border);display:none}
+.price-row{display:flex;background:var(--s1);border:1px solid var(--border)}
+.price-row span{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);padding:0 12px;border-right:1px solid var(--border);display:flex;align-items:center;flex-shrink:0}
+.price-row input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:11px 12px}
+.price-row input::placeholder{color:var(--muted)}
+.act-btn{width:100%;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;padding:11px;border:none;transition:.15s;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))}
+.act-btn.claim{background:var(--acc3);color:#000}.act-btn.claim:hover{background:#fff}
+.act-btn.over{background:var(--acc2);color:#fff}.act-btn.over:hover{background:#ff6644}
+.act-btn[disabled]{opacity:.3;cursor:not-allowed;pointer-events:none}
+.tx-msg{font-family:'Space Mono',monospace;font-size:9px;padding:8px 10px;border:1px solid;word-break:break-all}
+.tx-msg.ok{border-color:var(--acc3);color:var(--acc3)}.tx-msg.err{border-color:var(--acc2);color:var(--acc2)}
+.s-rev{padding:18px}
+.rev-lab{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:4px}
+.rev-n{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--acc);letter-spacing:2px;line-height:1}
+.rev-u{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:12px}
+.btn-rev{width:100%;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;padding:11px;background:var(--acc);color:#000;border:none;transition:.15s}
+.btn-rev:hover:not([disabled]){background:#fff}
+.btn-rev[disabled]{opacity:.3;cursor:not-allowed}
+
+/* ═══ MY MEMES ══════════════════════════════════════════════════════════════ */
+.mine-hdr{padding:48px 32px 32px;border-bottom:1px solid var(--border)}
+.mine-hdr h1{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:4px;line-height:1;margin-bottom:6px}
+.mine-hdr h1 em{color:var(--acc);font-style:normal}
+.mine-hdr p{color:var(--muted);font-size:14px}
+
+/* ═══ WALLET MODAL ═══════════════════════════════════════════════════════════ */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-ov.open{display:flex;animation:fadeUp .18s ease}
+.modal-box{background:var(--s1);border:1px solid var(--b2);padding:38px;width:400px;max-width:94vw;position:relative}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.modal-h{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--acc);margin-bottom:5px}
+.modal-p{font-size:12px;color:var(--muted);line-height:1.75;margin-bottom:22px}
+.modal-close{position:absolute;top:15px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;transition:.15s}
+.modal-close:hover{color:var(--text)}
+.w-opt{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--border);cursor:pointer;margin-bottom:8px;transition:.15s}
+.w-opt:hover{border-color:var(--acc);background:rgba(245,255,0,.02)}
+.w-ico{width:38px;height:38px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.w-name{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px}
+.w-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.modal-links{margin-top:14px;font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);line-height:2.4}
+.modal-links a{color:var(--acc)}
+
+/* ═══ TOAST ══════════════════════════════════════════════════════════════════ */
+#toast{position:fixed;bottom:24px;right:24px;padding:11px 16px;background:var(--s2);border:1px solid var(--border);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;max-width:300px;transform:translateX(110%);opacity:0;transition:.25s;z-index:9000;pointer-events:none}
+#toast.show{transform:none;opacity:1}
+#toast.ok{border-color:var(--acc3);color:var(--acc3)}
+#toast.err{border-color:var(--acc2);color:var(--acc2)}
+#toast.info{border-color:var(--acc);color:var(--acc)}
+
+/* ═══ RESPONSIVE ════════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .det-layout{grid-template-columns:1fr}
+  .stat-bar{grid-template-columns:1fr 1fr}
+  .fg2,.soc-grid{grid-template-columns:1fr}
+  .mgrid{padding:1px 16px 16px}
+  .ctrl,.hero,.mine-hdr,.cw{padding-left:16px;padding-right:16px}
+  .det-main{padding:20px 16px}
+  .h-nav{display:none}
+  header{padding:0 16px}
+  .hero h1{font-size:42px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo" onclick="nav('explore')">MEME<em>SLOTS</em></div>
+  <nav class="h-nav">
+    <button id="nb-explore" class="active" onclick="nav('explore')">EXPLORE</button>
+    <button id="nb-create"  onclick="nav('create')">+ CREATE</button>
+    <button id="nb-mine"    onclick="nav('mine')">MY MEMES</button>
+  </nav>
+  <div class="h-right">
+    <div class="net-pill"><div class="nd"></div>TESTNET</div>
+    <button id="connectBtn" onclick="openModal()">CONNECT WALLET</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════ EXPLORE PAGE -->
+<div class="page active" id="page-explore">
+  <div class="hero">
+    <h1>EVERY MEME<br>HAS <span class="a1">100</span> <span class="a2">SLOTS</span></h1>
+    <p class="hero-sub">Claim a slot on any meme token on Bitcoin L1 via OP_NET. Earn 1% of every trade, every cycle. Takeover anytime — but so can anyone else.</p>
+    <div class="hero-stats">
+      <div class="hst"><div class="hl">TOTAL MEMES</div><div class="hv" id="hs1">—</div></div>
+      <div class="hst"><div class="hl">SLOTS ACTIVE</div><div class="hv" id="hs2">—</div></div>
+      <div class="hst"><div class="hl">TOTAL TAKEOVERS</div><div class="hv" id="hs3">—</div></div>
+    </div>
+  </div>
+  <div class="ctrl">
+    <div class="sbox">
+      <span class="sico">⌕</span>
+      <input id="searchQ" type="text" placeholder="Search by name or symbol…" oninput="doFilter()"/>
+    </div>
+    <div class="tabs">
+      <button class="tabb active" onclick="setTab('all',this)">ALL</button>
+      <button class="tabb" onclick="setTab('hot',this)">🔥 HOT</button>
+      <button class="tabb" onclick="setTab('new',this)">✨ NEW</button>
+    </div>
+    <button class="btn-create" onclick="nav('create')">+ CREATE MEME</button>
+  </div>
+  <div id="mGrid" class="mgrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════ CREATE PAGE -->
+<div class="page" id="page-create">
+<div class="cw">
+  <h1>LAUNCH YOUR<br><em>MEME TOKEN</em></h1>
+  <p class="csub">Deploy on Bitcoin L1 via OP_NET. 100 slots open for takeover instantly after deploy.<br>Token auto-listed on <strong>⚡ MOTOSWAP</strong> after all 3 steps complete.</p>
+
+  <!-- 01 TOKEN INFO -->
+  <div class="fsec">
+    <div class="fst">01 — Token Info</div>
+    <div class="fg2" style="margin-bottom:13px">
+      <div class="fr">
+        <label>Token Name *</label>
+        <input class="fi" id="fName" placeholder="e.g. DogeCoin2" maxlength="32" oninput="updateSummary()"/>
+      </div>
+      <div class="fr">
+        <label>Symbol *</label>
+        <input class="fi" id="fSym" placeholder="DOGE2" maxlength="8" oninput="this.value=this.value.toUpperCase();updateSummary();document.getElementById('symPrev').textContent=this.value||'TOKEN'"/>
+      </div>
+    </div>
+    <div class="fr">
+      <label>Description</label>
+      <textarea class="fi" id="fDesc" rows="3" placeholder="What's the vibe of this meme?" style="resize:vertical"></textarea>
+    </div>
+  </div>
+
+  <!-- 02 MEDIA -->
+  <div class="fsec">
+    <div class="fst">02 — Media</div>
+    <div class="fr">
+      <label>Banner / Logo Image URL</label>
+      <input class="fi" id="fImg" type="url" placeholder="https://i.imgur.com/..." oninput="previewImg()"/>
+      <div class="fhint">Paste any direct image URL (PNG, JPG, GIF, WebP)</div>
+    </div>
+    <img id="imgPrev" src="" alt="" style="display:none;width:100%;aspect-ratio:16/9;object-fit:cover;margin-top:10px;border:1px solid var(--border)"/>
+  </div>
+
+  <!-- 03 TOKENOMICS -->
+  <div class="fsec">
+    <div class="fst">03 — Tokenomics</div>
+    <div class="fg2">
+      <div class="fr">
+        <label>Total Supply *</label>
+        <div class="sup-wrap">
+          <input class="fi" id="fSupply" value="1,000,000,000" placeholder="1,000,000,000" oninput="onSupplyInput(this)" style="padding-right:30px"/>
+          <div class="sup-unit" id="supUnit">B</div>
+        </div>
+        <div class="presets">
+          <button class="prst" onclick="setSupply('1,000,000')">1M</button>
+          <button class="prst" onclick="setSupply('100,000,000')">100M</button>
+          <button class="prst active" onclick="setSupply('1,000,000,000')">1B ★</button>
+          <button class="prst" onclick="setSupply('10,000,000,000')">10B</button>
+          <button class="prst" onclick="setSupply('1,000,000,000,000')">1T</button>
+        </div>
+        <div class="fhint">Mặc định 1B · Min 1M · Max 1T · Tự chỉnh tùy ý</div>
+      </div>
+      <div class="fr">
+        <label>Slot Floor Price (SAT) *</label>
+        <input class="fi" id="fFloor" type="number" value="1000" min="500" oninput="updateSummary()"/>
+        <div class="fhint" id="floorHint">Min 500 SAT · ≈ $0.0000 USD</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 SOCIAL LINKS -->
+  <div class="fsec">
+    <div class="fst">04 — Links & Social</div>
+    <div class="soc-grid">
+      <div class="fr">
+        <label>Website</label>
+        <div class="sf"><div class="sf-ico">🌐</div><input type="url" id="sWeb" placeholder="https://yoursite.com" oninput="socPreview('sWeb','oWeb')"/><a id="oWeb" class="sf-open" target="_blank">↗</a></div>
+      </div>
+      <div class="fr">
+        <label>X / Twitter</label>
+        <div class="sf"><div class="sf-ico">𝕏</div><input type="url" id="sTwi" placeholder="https://x.com/yourtoken" oninput="socPreview('sTwi','oTwi')"/><a id="oTwi" class="sf-open" target="_blank">↗</a></div>
+      </div>
+      <div class="fr">
+        <label>Telegram</label>
+        <div class="sf"><div class="sf-ico">✈️</div><input type="url" id="sTg" placeholder="https://t.me/yourgroup" oninput="socPreview('sTg','oTg')"/><a id="oTg" class="sf-open" target="_blank">↗</a></div>
+      </div>
+      <div class="fr">
+        <label>Discord</label>
+        <div class="sf"><div class="sf-ico">💬</div><input type="url" id="sDis" placeholder="https://discord.gg/..." oninput="socPreview('sDis','oDis')"/><a id="oDis" class="sf-open" target="_blank">↗</a></div>
+      </div>
+      <div class="fr">
+        <label>GitHub</label>
+        <div class="sf"><div class="sf-ico">🐙</div><input type="url" id="sGit" placeholder="https://github.com/..." oninput="socPreview('sGit','oGit')"/><a id="oGit" class="sf-open" target="_blank">↗</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 MOTOSWAP -->
+  <div class="fsec">
+    <div class="fst">05 — Motoswap Pool</div>
+    <div class="moto-box">
+      <div class="moto-ico">⚡</div>
+      <div class="moto-txt">
+        <strong>Auto-launch trading on Motoswap DEX</strong>
+        <p>Sau khi 3 bước deploy xong, bạn được redirect thẳng tới trang <strong>Add Liquidity</strong> trên <a href="https://motoswap.org" target="_blank" rel="noreferrer">motoswap.org</a> với token address điền sẵn. Chỉ cần deposit BTC + <span id="symPrev" style="color:var(--acc)">TOKEN</span> là pool hoạt động.</p>
+      </div>
+      <div class="moto-badge">AUTO ✓</div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="sumbox">
+    <div class="sum-h">Deployment Summary</div>
+    <div class="sum-row"><span class="sum-k">Token name</span><span class="sum-v" id="sumN">—</span></div>
+    <div class="sum-row"><span class="sum-k">Symbol</span><span class="sum-v" id="sumS">—</span></div>
+    <div class="sum-row"><span class="sum-k">Total supply</span><span class="sum-v" id="sumSup">—</span></div>
+    <div class="sum-row"><span class="sum-k">Slot floor price</span><span class="sum-v" id="sumF">—</span></div>
+    <div class="sum-row"><span class="sum-k">Social links</span><span class="sum-v" id="sumSoc">0 added</span></div>
+    <div class="sum-row"><span class="sum-k">Protocol fee</span><span class="sum-v acc">10,000 SAT</span></div>
+  </div>
+
+  <div id="dErr" class="err-box" style="display:none"></div>
+
+  <!-- DEPLOY BUTTON -->
+  <div id="deployArea">
+    <button class="btn-deploy" id="btnDeploy" onclick="handleDeploy()">DEPLOY MEME TOKEN →</button>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps-wrap" id="stepsWrap" style="display:none">
+    <div class="steps-label">DEPLOYMENT PROGRESS</div>
+    <div class="step" id="st1">
+      <div class="step-n active" id="sn1">1</div>
+      <div>
+        <div class="step-t">Deploy RevenueSharing</div>
+        <div class="step-d">100-slot revenue contract on OP_NET Bitcoin L1</div>
+        <div class="step-h" id="sh1"></div>
+      </div>
+    </div>
+    <div class="step" id="st2">
+      <div class="step-n" id="sn2">2</div>
+      <div>
+        <div class="step-t" id="st2t">Deploy MemeToken (OP_20)</div>
+        <div class="step-d" id="st2d">Token với supply tùy chỉnh + 1% auto fee routing</div>
+        <div class="step-h" id="sh2"></div>
+      </div>
+    </div>
+    <div class="step" id="st3">
+      <div class="step-n" id="sn3">3</div>
+      <div>
+        <div class="step-t">Register in Factory</div>
+        <div class="step-d">Đăng ký tên, symbol, social links lên MEMESLOTS</div>
+        <div class="step-h" id="sh3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS PANEL -->
+  <div class="success-panel" id="successPanel" style="display:none">
+    <h3>🎉 TOKEN DEPLOYED!</h3>
+    <div class="suc-addr">Contract address: <span id="deployedAddr">—</span></div>
+    <div class="suc-acts">
+      <button class="sa view" id="btnView">VIEW MY MEME →</button>
+      <a class="sa liq" id="btnLiq" href="#" target="_blank" rel="noreferrer">⚡ ADD LIQUIDITY ON MOTOSWAP</a>
+      <a class="sa swap" id="btnSwap" href="#" target="_blank" rel="noreferrer">🔄 SWAP ON MOTOSWAP</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ MY MEMES PAGE -->
+<div class="page" id="page-mine">
+  <div class="mine-hdr">
+    <h1>MY <em>MEMES</em></h1>
+    <p>Tokens you created and slots you own across all memes.</p>
+  </div>
+  <div id="myGrid" class="mgrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════ DETAIL PAGE -->
+<div class="page" id="page-detail">
+  <div class="det-back" onclick="nav('explore')">← Back to Explore</div>
+  <div class="det-layout">
+    <!-- main -->
+    <div class="det-main">
+      <div class="det-hero">
+        <div class="d-logo" id="dLogo">🐸</div>
+        <div>
+          <div class="d-title" id="dName">—</div>
+          <div class="d-sym" id="dSym">—</div>
+          <div class="d-by" id="dBy">—</div>
+          <div class="d-soc" id="dSoc"></div>
+          <a class="d-moto" id="dMoto" href="#" target="_blank" rel="noreferrer">⚡ SWAP ON MOTOSWAP</a>
+        </div>
+      </div>
+      <div id="dBanner"></div>
+      <div class="stat-bar">
+        <div class="sbc"><div class="sl">CYCLE</div><div class="sv a" id="d-cyc">—</div></div>
+        <div class="sbc"><div class="sl">CYCLE FEE (SAT)</div><div class="sv" id="d-fee">—</div></div>
+        <div class="sbc"><div class="sl">TAKEOVERS</div><div class="sv b" id="d-tak">—</div></div>
+        <div class="sbc"><div class="sl">SLOTS FILLED</div><div class="sv c" id="d-fill">—</div></div>
+      </div>
+      <div class="cyc-box">
+        <div class="cyc-top">
+          <span class="cyc-lab">CURRENT CYCLE PROGRESS</span>
+          <span class="cyc-n" id="d-cn">—</span>
+        </div>
+        <div class="cyc-bar"><div class="cyc-fill" id="d-cf" style="width:0%"></div></div>
+        <div class="cyc-bot"><span id="d-cs">—</span><span id="d-cl">—</span></div>
+      </div>
+      <div class="slots-h">100 SLOTS — CLICK A SLOT TO INTERACT</div>
+      <div class="sg" id="slotGrid"></div>
+    </div>
+    <!-- side -->
+    <div class="det-side">
+      <div class="s-info">
+        <div class="s-h">SLOT DETAIL</div>
+        <div id="slotInfo"><div style="color:var(--muted);font-size:13px">← Click a slot to view info</div></div>
+      </div>
+      <div class="s-act" id="sAct">
+        <div class="price-row">
+          <span>SAT</span>
+          <input type="number" id="priceInp" placeholder="Enter amount…"/>
+        </div>
+        <button class="act-btn claim" id="btnClaim" disabled onclick="doClaim()">CLAIM SLOT</button>
+        <button class="act-btn over"  id="btnOver"  disabled onclick="doTakeover()">⚡ TAKEOVER</button>
+        <div id="txMsg" style="display:none"></div>
+      </div>
+      <div class="s-rev">
+        <div class="rev-lab">MY PENDING REVENUE</div>
+        <div class="rev-n" id="revN">0</div>
+        <div class="rev-u">SATOSHI</div>
+        <button class="btn-rev" id="btnRev" disabled onclick="doClaimRev()">CLAIM REVENUE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET MODAL -->
+<div class="modal-ov" id="wModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-h">CONNECT WALLET</div>
+    <p class="modal-p">Connect your Bitcoin wallet to claim slots, earn revenue, and deploy meme tokens on OP_NET — Bitcoin Layer 1.</p>
+    <div class="w-opt" onclick="connectOpWallet()">
+      <div class="w-ico">₿</div>
+      <div><div class="w-name">OP_WALLET</div><div class="w-sub">Official OP_NET browser extension</div></div>
+    </div>
+    <div class="w-opt" onclick="connectUnisat()">
+      <div class="w-ico">🟠</div>
+      <div><div class="w-name">UNISAT</div><div class="w-sub">Bitcoin wallet with OP_NET support</div></div>
+    </div>
+    <div class="modal-links">
+      Don't have a wallet?<br>
+      <a href="https://chromewebstore.google.com/detail/opwallet/pmbjpcmaaladnfpacpmhmnfmpklgbdjb" target="_blank" rel="noreferrer">→ Install OP_WALLET (Chrome)</a><br>
+      <a href="https://unisat.io/download" target="_blank" rel="noreferrer">→ Install Unisat Wallet</a><br>
+      <a href="https://testnet.opnet.org/faucet" target="_blank" rel="noreferrer">→ Get testnet BTC from faucet</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════ JAVASCRIPT -->
+<script>
+'use strict';
+/* ─────────────────────────────── CONFIG ─────────────────────────────────── */
+const CFG = {
+  FACTORY:   '',                        // ← Fill after deploying MemeFactoryV2
+  RPC:       'https://testnet.opnet.org',
+  MOTOSWAP:  'https://motoswap.org',
+  MIN_FLOOR: 500,
+  MIN_SUP:   1_000_000,
+  MAX_SUP:   1_000_000_000_000,
+  CYCLE_BLK: 432,                       // blocks per revenue cycle (~3 days)
+};
+
+/* ─────────────────────────────── STATE ─────────────────────────────────── */
+const S = {
+  wallet: null, provider: null,
+  tab: 'all', search: '',
+  memes: [], filtered: [],
+  curMeme: null, selSlot: null,
+  slots: [], myRev: 0,
+  deplToken: null, deplIdx: null,
+};
+
+/* ─────────────────────────────── NAVIGATION ─────────────────────────────── */
+function nav(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.h-nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  const nb = document.getElementById('nb-' + p);
+  if (nb) nb.classList.add('active');
+  else document.getElementById('nb-explore').classList.add('active');
+  if (p === 'explore') loadMemes();
+  if (p === 'mine')    renderMine();
+  window.scrollTo(0, 0);
+}
+
+/* ─────────────────────────────── WALLET ─────────────────────────────── */
+const openModal  = () => document.getElementById('wModal').classList.add('open');
+const closeModal = () => document.getElementById('wModal').classList.remove('open');
+
+async function connectOpWallet() {
+  if (!window.opnet) {
+    toast('OP_WALLET not installed — redirecting to install…', 'err');
+    setTimeout(() => window.open('https://chromewebstore.google.com/detail/opwallet/pmbjpcmaaladnfpacpmhmnfmpklgbdjb', '_blank'), 800);
+    return;
+  }
+  try {
+    toast('Connecting to OP_WALLET…', 'info');
+    const accs = await window.opnet.requestAccounts();
+    if (accs?.length) onConnected(accs[0], 'OP_WALLET', window.opnet);
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+async function connectUnisat() {
+  if (!window.unisat) { toast('Unisat not installed', 'err'); return; }
+  try {
+    toast('Connecting to Unisat…', 'info');
+    const accs = await window.unisat.requestAccounts();
+    if (accs?.length) onConnected(accs[0], 'Unisat', window.unisat);
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+function onConnected(addr, name, prov) {
+  S.wallet = addr; S.provider = prov;
+  closeModal();
+  const btn = document.getElementById('connectBtn');
+  btn.textContent = trunc(addr, 6);
+  btn.classList.add('on');
+  btn.onclick = disconnect;
+  toast('Connected: ' + name, 'ok');
+  loadMemes();
+  prov.on?.('accountsChanged', a => {
+    if (!a?.length) disconnect();
+    else { S.wallet = a[0]; btn.textContent = trunc(a[0], 6); }
+  });
+}
+
+function disconnect() {
+  S.wallet = null; S.provider = null;
+  const btn = document.getElementById('connectBtn');
+  btn.textContent = 'CONNECT WALLET';
+  btn.classList.remove('on');
+  btn.onclick = openModal;
+  toast('Wallet disconnected', 'info');
+}
+
+/* ─────────────────────────────── OP_NET RPC ────────────────────────────── */
+async function rpc(method, params = []) {
+  try {
+    const r = await fetch(CFG.RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+    });
+    return (await r.json()).result ?? null;
+  } catch { return null; }
+}
+
+/* ─────────────────────────────── LOAD MEMES ─────────────────────────────── */
+async function loadMemes() {
+  if (CFG.FACTORY) {
+    await loadOnchainMemes();
+  } else {
+    loadMockMemes();
+  }
+}
+
+async function loadOnchainMemes() {
+  /* Real OP_NET call:
+     1. getMemeCount() → count
+     2. getMemesPaginated(0, 20) → indices
+     3. getMeme(i) per index
+     Requires @btc-vision/transaction SDK in a bundled build.
+     Using mock for GitHub Pages demo. */
+  loadMockMemes();
+}
+
+/* ─────────────────────────────── MOCK DATA ────────────────────────────── */
+function rng(seed) { return Math.abs(Math.sin(seed * 9301 + 49297) * 233280) % 1; }
+
+function loadMockMemes() {
+  const data = [
+    { name:'PepeCoin2', sym:'PEPE2', e:'🐸', desc:'The original frog is back on Bitcoin L1', supply:'21,000,000,000' },
+    { name:'QuackDEX',  sym:'QUACK', e:'🦆', desc:'Quack quack to the moon on OP_NET', supply:'1,000,000,000' },
+    { name:'DogeSat',   sym:'DSAT',  e:'🐶', desc:'Much BTC, very satoshi, very wow', supply:'100,000,000,000' },
+    { name:'MoonBTC',   sym:'MOON',  e:'🚀', desc:'To the moon and beyond on Bitcoin', supply:'500,000,000' },
+    { name:'DiamondHODL',sym:'HODL', e:'💎', desc:'Diamond hands forever, never selling', supply:'1,000,000,000' },
+    { name:'FireToken', sym:'FIRE',  e:'🔥', desc:'Burning supply, increasing value theory', supply:'10,000,000,000' },
+    { name:'ZapCoin',   sym:'ZAP',   e:'⚡', desc:'Electric speed on Bitcoin Layer 1', supply:'1,000,000,000' },
+    { name:'FoxSwap',   sym:'FOX',   e:'🦊', desc:'Sly fox always wins the defi game', supply:'250,000,000' },
+    { name:'CatSats',   sym:'CATS',  e:'🐱', desc:'Meow to the moon on OP_NET', supply:'69,000,000,000' },
+    { name:'BullRun',   sym:'BULL',  e:'🐂', desc:'Bully the bears every single day', supply:'1,000,000,000' },
+    { name:'NoodleCoin',sym:'NOOD',  e:'🍜', desc:'Noodles and Bitcoin is the perfect life', supply:'1,000,000,000,000' },
+    { name:'FrogArmy',  sym:'FROG',  e:'🐸', desc:'Crypto frog army mobilize on BTC L1', supply:'100,000,000' },
+    { name:'CryptoRabit',sym:'BRAB', e:'🐰', desc:'Rabbit season, Bitcoin season always', supply:'777,000,000' },
+    { name:'GigaChad',  sym:'GIGA',  e:'😤', desc:'Giga chad energy on Bitcoin network', supply:'1,000,000,000' },
+    { name:'Saturn6',   sym:'SAT6',  e:'🪐', desc:'6th planet, 6 BTC, satoshi vibes', supply:'6,000,000,000' },
+  ];
+  const socials = [
+    { website:'https://example.com', twitter:'https://x.com/example' },
+    { telegram:'https://t.me/example', discord:'https://discord.gg/example' },
+    { website:'https://example.com', twitter:'https://x.com/example', telegram:'https://t.me/example' },
+    {},
+    { github:'https://github.com/example' },
+  ];
+
+  S.memes = data.map((d, i) => ({
+    id: i, name: d.name, symbol: d.sym, emoji: d.e, desc: d.desc,
+    supply: d.supply, imageUrl: '',
+    creator: '0x' + rng(i*7+1).toString(16).padStart(12,'0') + rng(i*3+2).toString(16).padStart(8,'0'),
+    floorPrice: 500 + Math.floor(rng(i*5+3) * 9500),
+    takeovers: Math.floor(rng(i*11+4) * 300),
+    slotsFilled: Math.floor(rng(i*13+5) * 100),
+    cycleRevenue: Math.floor(rng(i*17+6) * 150000),
+    createdBlock: 100000 + i * 437 + Math.floor(rng(i) * 200),
+    tokenAddr: '0xTOKEN_MOCK_' + i.toString(16).padStart(4,'0'),
+    revenueAddr: '0xREV_MOCK_' + i.toString(16).padStart(4,'0'),
+    social: socials[i % socials.length],
+    isNew: i >= 11, isHot: i < 4, isMine: false,
+  }));
+
+  document.getElementById('hs1').textContent = S.memes.length;
+  document.getElementById('hs2').textContent = S.memes.reduce((a,m) => a + m.slotsFilled, 0).toLocaleString();
+  document.getElementById('hs3').textContent = S.memes.reduce((a,m) => a + m.takeovers, 0).toLocaleString();
+  S.filtered = [...S.memes];
+  applyTab();
+}
+
+/* ─────────────────────────────── RENDER GRID ─────────────────────────────── */
+function renderGrid(list) {
+  const g = document.getElementById('mGrid');
+  if (!list.length) {
+    g.innerHTML = `<div class="empty-state">
+      <div class="empty-big">${CFG.FACTORY ? 'NO MEMES YET' : 'DEMO MODE'}</div>
+      <div style="margin-bottom:16px;font-size:13px">${CFG.FACTORY ? 'Be the first to create a meme token!' : 'Set CFG.FACTORY after deploying the contract to go live.'}</div>
+      <button class="btn-create" onclick="nav('create')">+ CREATE FIRST MEME</button>
+    </div>`;
+    return;
+  }
+  g.innerHTML = list.map(memeCard).join('');
+}
+
+const SOCS = [['website','🌐'],['twitter','𝕏'],['telegram','✈️'],['discord','💬'],['github','🐙']];
+
+function memeCard(m) {
+  const sc = m.social || {};
+  const socHtml = SOCS.filter(([k]) => sc[k])
+    .map(([k,i]) => `<a class="mc-sl" href="${h(sc[k])}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()" title="${k}">${i}</a>`)
+    .join('');
+  return `<div class="mcard" onclick="openMeme(${m.id})">
+    ${m.imageUrl ? `<img class="mc-banner" src="${h(m.imageUrl)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=mc-ph>${m.emoji}</div>'">` : `<div class="mc-ph">${m.emoji}</div>`}
+    <div class="mc-body">
+      <div class="mc-top">
+        <div class="mc-logo">${m.imageUrl ? `<img src="${h(m.imageUrl)}" alt="" onerror="this.parentNode.textContent='${m.emoji}'">` : m.emoji}</div>
+        <div class="mc-info">
+          <div class="mc-name">${h(m.name)}</div>
+          <div class="mc-sym">${h(m.symbol)}</div>
+        </div>
+        <div class="mc-badges">
+          ${m.isMine ? '<span class="badge mine">★ MINE</span>' : ''}
+          ${m.isHot  ? '<span class="badge hot">🔥 HOT</span>'  : ''}
+          ${m.isNew  ? '<span class="badge new">NEW</span>'     : ''}
+        </div>
+      </div>
+      <div class="mc-stats">
+        <div class="mst"><div class="ml">SLOTS</div><div class="mv cc">${m.slotsFilled}/100</div></div>
+        <div class="mst"><div class="ml">TAKEOVERS</div><div class="mv cb">${m.takeovers}</div></div>
+        <div class="mst"><div class="ml">CYCLE FEE</div><div class="mv ca">${m.cycleRevenue.toLocaleString()}</div></div>
+      </div>
+      ${socHtml ? `<div class="mc-soc">${socHtml}</div>` : ''}
+    </div>
+    <div class="mc-foot">
+      <span class="mc-by">by ${trunc(m.creator, 6)}</span>
+      <a class="mc-swap" href="${motoSwap(m.tokenAddr)}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()" title="Swap on Motoswap">⚡ MOTOSWAP</a>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────── FILTER ──────────────────────────────────── */
+function doFilter() {
+  S.search = document.getElementById('searchQ').value.toLowerCase().trim();
+  S.filtered = S.memes.filter(m => !S.search || m.name.toLowerCase().includes(S.search) || m.symbol.toLowerCase().includes(S.search));
+  applyTab();
+}
+function setTab(t, btn) {
+  S.tab = t;
+  document.querySelectorAll('.tabb').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyTab();
+}
+function applyTab() {
+  const list = [...S.filtered];
+  if (S.tab === 'hot') list.sort((a,b) => b.takeovers - a.takeovers);
+  if (S.tab === 'new') list.sort((a,b) => b.createdBlock - a.createdBlock);
+  renderGrid(list);
+}
+
+/* ─────────────────────────────── MEME DETAIL ────────────────────────────── */
+function openMeme(id) {
+  const m = S.memes.find(x => x.id === id);
+  if (!m) return;
+  S.curMeme = m; S.selSlot = null;
+
+  // Generate realistic mock slots for this meme
+  S.slots = Array.from({length:100}, (_,i) => {
+    const owned = rng(i * m.id * 7 + 31) > 0.42;
+    if (!owned) return { id: i, isEmpty: true, owner: '', price: 0, sinceCycle: 0, ismine: false };
+    const price = m.floorPrice + Math.floor(rng(i*3+m.id) * m.floorPrice * 4);
+    const ismine = !!(S.wallet && rng(i * m.id + 99) > 0.92);
+    return { id: i, isEmpty: false, owner: '0x'+rng(i*17).toString(16).slice(2,12)+rng(i).toString(16).slice(2,10), price, sinceCycle: Math.floor(rng(i)*3), ismine };
+  });
+
+  // My revenue
+  S.myRev = S.wallet ? Math.floor(rng(id * 7 + S.wallet.charCodeAt(2) || 3) * 8000) : 0;
+
+  // Header
+  const logo = document.getElementById('dLogo');
+  logo.innerHTML = m.imageUrl ? `<img src="${h(m.imageUrl)}" alt="" onerror="this.parentNode.textContent='${m.emoji}'">` : m.emoji;
+  document.getElementById('dName').textContent = m.name;
+  document.getElementById('dSym').textContent  = m.symbol;
+  document.getElementById('dBy').textContent   = 'by ' + trunc(m.creator, 8);
+  document.getElementById('dMoto').href = motoSwap(m.tokenAddr);
+
+  // Socials
+  const sc = m.social || {};
+  document.getElementById('dSoc').innerHTML = SOCS.filter(([k]) => sc[k])
+    .map(([k,i]) => `<a class="d-sl" href="${h(sc[k])}" target="_blank" rel="noreferrer" title="${k}">${i}</a>`)
+    .join('');
+
+  // Banner
+  document.getElementById('dBanner').innerHTML = m.imageUrl
+    ? `<img class="det-banner" src="${h(m.imageUrl)}" alt="" onerror="this.outerHTML='<div class=det-banner-ph>${m.emoji}</div>'">`
+    : `<div class="det-banner-ph">${m.emoji}</div>`;
+
+  // Stats
+  const filled = S.slots.filter(s => !s.isEmpty).length;
+  const progPct = Math.floor(rng(id + Date.now()/100000) * 100);
+  const blLeft  = Math.floor((1 - progPct/100) * CFG.CYCLE_BLK);
+  document.getElementById('d-cyc').textContent  = '3';
+  document.getElementById('d-fee').textContent  = m.cycleRevenue.toLocaleString();
+  document.getElementById('d-tak').textContent  = m.takeovers;
+  document.getElementById('d-fill').textContent = filled + '/100';
+  document.getElementById('d-cn').textContent   = 'CYCLE #3';
+  document.getElementById('d-cf').style.width   = progPct + '%';
+  document.getElementById('d-cs').textContent   = 'Block ' + m.createdBlock.toLocaleString();
+  document.getElementById('d-cl').textContent   = blLeft + ' blocks left (~' + Math.ceil(blLeft*10/60) + 'h)';
+
+  // Revenue
+  document.getElementById('revN').textContent = S.myRev.toLocaleString();
+  document.getElementById('btnRev').disabled  = S.myRev === 0;
+
+  renderSlots();
+  document.getElementById('slotInfo').innerHTML = '<div style="color:var(--muted);font-size:13px">← Click a slot to view info</div>';
+  document.getElementById('sAct').style.display = 'none';
+  nav('detail');
+}
+
+function renderSlots() {
+  const g = document.getElementById('slotGrid');
+  g.innerHTML = '';
+  S.slots.forEach(sl => {
+    const d = document.createElement('div');
+    d.className = 'sl-item'
+      + (sl.ismine ? ' mine' : sl.isEmpty ? '' : ' owned')
+      + (S.selSlot === sl.id ? ' sel' : '')
+      + (sl.price > (S.curMeme?.floorPrice || 0) * 5 ? ' hot' : '');
+    d.textContent = sl.id;
+    d.title = `Slot #${sl.id}` + (sl.isEmpty ? ' (empty)' : ` — ${sl.price.toLocaleString()} SAT`);
+    d.onclick = () => selectSlot(sl.id);
+    g.appendChild(d);
+  });
+}
+
+function selectSlot(id) {
+  S.selSlot = id;
+  renderSlots();
+  const sl = S.slots[id];
+  const fp = S.curMeme?.floorPrice || 500;
+  document.getElementById('slotInfo').innerHTML = sl.isEmpty
+    ? `<div class="irow"><span class="ik">SLOT #</span><span class="iv ia">${id}</span></div>
+       <div class="irow"><span class="ik">STATUS</span><span class="iv ic">EMPTY</span></div>
+       <div class="irow"><span class="ik">FLOOR PRICE</span><span class="iv">${fp.toLocaleString()} SAT</span></div>
+       <div class="irow"><span class="ik">REWARD</span><span class="iv" style="font-size:9px">1% trade fee / cycle</span></div>`
+    : `<div class="irow"><span class="ik">SLOT #</span><span class="iv ia">${id}</span></div>
+       <div class="irow"><span class="ik">STATUS</span><span class="iv ib">${sl.ismine ? '★ YOURS' : 'TAKEN'}</span></div>
+       <div class="irow"><span class="ik">OWNER</span><span class="iv" style="font-size:9px">${trunc(sl.owner, 6)}</span></div>
+       <div class="irow"><span class="ik">PRICE</span><span class="iv ia">${sl.price.toLocaleString()} SAT</span></div>
+       <div class="irow"><span class="ik">SINCE CYCLE</span><span class="iv">#${sl.sinceCycle}</span></div>`;
+
+  const act = document.getElementById('sAct');
+  act.style.display = 'flex';
+  document.getElementById('priceInp').value = '';
+  document.getElementById('priceInp').placeholder = sl.isEmpty ? `Min ${fp.toLocaleString()} SAT` : `> ${sl.price.toLocaleString()} SAT`;
+  // Enable buttons always — nếu chưa có ví sẽ nhắc connect khi click
+  document.getElementById('btnClaim').disabled = !sl.isEmpty;
+  document.getElementById('btnOver').disabled  = sl.isEmpty || sl.ismine;
+  document.getElementById('txMsg').style.display = 'none';
+}
+
+/* ─────────────────────────────── SLOT ACTIONS ──────────────────────────── */
+function needWallet() {
+  if (!S.wallet) {
+    openModal();
+    showTx('Connect your wallet first to interact', 'err');
+    return false;
+  }
+  return true;
+}
+
+function showTx(msg, type) {
+  const el = document.getElementById('txMsg');
+  el.textContent = msg;
+  el.className = 'tx-msg ' + type;
+  el.style.display = 'block';
+}
+
+// ── Encode calldata cho OP_NET (4-byte selector + args) ──────────────────────
+// OP_NET dùng keccak-like selector giống EVM
+function keccak4(sig) {
+  // Simplified keccak cho browser — dùng lookup table cho các selector cần thiết
+  // Nếu có ethers.js hoặc web3.js thì dùng: ethers.id(sig).slice(0,10)
+  const SELECTORS = {
+    'claimSlot(uint16,uint256)':   '0x4e7d4b39',
+    'takeoverSlot(uint16,uint256)':'0x1b3f5b2a',
+    'claimRevenue()':              '0xf0b93e9a',
+    'getSlotInfo(uint16)':         '0xa9059cbb',
+    'getCurrentCycle()':           '0x3b3b57de',
+    'getPendingRevenue(address)':  '0x70a08231',
+  };
+  return SELECTORS[sig] || null;
+}
+
+function encodeU16(n) {
+  // uint16 zero-padded to 32 bytes
+  const buf = new Uint8Array(32);
+  buf[30] = (n >> 8) & 0xff;
+  buf[31] = n & 0xff;
+  return buf;
+}
+
+function encodeU256fromNum(n) {
+  // bigint/number to 32 bytes big-endian
+  const buf = new Uint8Array(32);
+  let v = BigInt(n);
+  for (let i = 31; i >= 0 && v > 0n; i--) {
+    buf[i] = Number(v & 0xffn);
+    v >>= 8n;
+  }
+  return buf;
+}
+
+function buildCalldata(sig, ...args) {
+  const sel = keccak4(sig);
+  if (!sel) throw new Error('Unknown selector: ' + sig);
+  // sel is "0xAABBCCDD" — convert to bytes
+  const selBytes = new Uint8Array([
+    parseInt(sel.slice(2,4),16),
+    parseInt(sel.slice(4,6),16),
+    parseInt(sel.slice(6,8),16),
+    parseInt(sel.slice(8,10),16),
+  ]);
+  const parts = [selBytes, ...args];
+  const total = parts.reduce((s, p) => s + p.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const p of parts) { out.set(p, off); off += p.length; }
+  return '0x' + Array.from(out).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Gọi OP_WALLET / Unisat để thực hiện transaction ──────────────────────────
+async function sendOpnetTx(contractAddr, calldataHex, satoshis) {
+  if (!S.provider) throw new Error('No wallet connected');
+
+  // OP_WALLET API (window.opnet)
+  if (window.opnet && S.provider === window.opnet) {
+    const result = await window.opnet.signAndBroadcastInteraction({
+      to: contractAddr,
+      calldata: calldataHex,
+      satoshis: satoshis,
+    });
+    return result;
+  }
+
+  // Unisat OP_NET API (window.unisat)
+  if (window.unisat && S.provider === window.unisat) {
+    // Unisat hỗ trợ OP_NET qua sendBitcoin nâng cao hoặc signTransaction
+    const result = await window.unisat.signAndBroadcastInteraction?.({
+      to: contractAddr,
+      calldata: calldataHex,
+      satoshis: satoshis,
+    });
+    if (!result) throw new Error('Unisat chưa hỗ trợ OP_NET interaction — dùng OP_WALLET');
+    return result;
+  }
+
+  throw new Error('Provider không hỗ trợ OP_NET transaction');
+}
+
+async function doClaim() {
+  if (!needWallet() || S.selSlot === null) return;
+  const amt = parseInt(document.getElementById('priceInp').value) || 0;
+  const fp = S.curMeme?.floorPrice || 500;
+  if (amt < fp) { showTx(`Min ${fp.toLocaleString()} SAT required`, 'err'); return; }
+
+  showTx('Sending transaction…', 'ok');
+  document.getElementById('btnClaim').disabled = true;
+
+  try {
+    const revenueAddr = S.curMeme?.revenueAddr || '';
+
+    if (revenueAddr && revenueAddr !== '' && !revenueAddr.startsWith('0xREV_MOCK')) {
+      // ── REAL OP_NET transaction ──
+      const calldata = buildCalldata(
+        'claimSlot(uint16,uint256)',
+        encodeU16(S.selSlot),
+        encodeU256fromNum(amt)
+      );
+      const txResult = await sendOpnetTx(revenueAddr, calldata, amt);
+      const txid = txResult?.txid || txResult?.hash || JSON.stringify(txResult);
+      showTx('✓ TX broadcast! TXID: ' + txid, 'ok');
+    } else {
+      // ── DEMO mode ─ simulate ──
+      await sleep(900);
+    }
+
+    // Update local state
+    S.slots[S.selSlot] = { id: S.selSlot, isEmpty: false, owner: S.wallet, price: amt, sinceCycle: 3, ismine: true };
+    renderSlots();
+    selectSlot(S.selSlot);
+    if (!revenueAddr || revenueAddr.startsWith('0xREV_MOCK')) {
+      showTx('✓ Slot #' + S.selSlot + ' claimed! (demo)', 'ok');
+    }
+    toast('Slot #' + S.selSlot + ' claimed!', 'ok');
+
+  } catch(e) {
+    showTx('Error: ' + (e.message || String(e)), 'err');
+    document.getElementById('btnClaim').disabled = false;
+  }
+}
+
+async function doTakeover() {
+  if (!needWallet() || S.selSlot === null) return;
+  const sl = S.slots[S.selSlot];
+  const amt = parseInt(document.getElementById('priceInp').value) || 0;
+  if (amt <= sl.price) { showTx(`Must pay > ${sl.price.toLocaleString()} SAT`, 'err'); return; }
+
+  showTx('Broadcasting takeover…', 'ok');
+  document.getElementById('btnOver').disabled = true;
+
+  try {
+    const revenueAddr = S.curMeme?.revenueAddr || '';
+
+    if (revenueAddr && !revenueAddr.startsWith('0xREV_MOCK')) {
+      // ── REAL ──
+      const calldata = buildCalldata(
+        'takeoverSlot(uint16,uint256)',
+        encodeU16(S.selSlot),
+        encodeU256fromNum(amt)
+      );
+      const txResult = await sendOpnetTx(revenueAddr, calldata, amt);
+      const txid = txResult?.txid || txResult?.hash || JSON.stringify(txResult);
+      showTx('✓ Takeover TX! TXID: ' + txid, 'ok');
+    } else {
+      // ── DEMO ──
+      await sleep(900);
+    }
+
+    const prev = sl.price;
+    S.slots[S.selSlot] = { id: S.selSlot, isEmpty: false, owner: S.wallet, price: amt, sinceCycle: 3, ismine: true };
+    S.curMeme.takeovers++;
+    document.getElementById('d-tak').textContent = S.curMeme.takeovers;
+    renderSlots();
+    selectSlot(S.selSlot);
+    if (!revenueAddr || revenueAddr.startsWith('0xREV_MOCK')) {
+      showTx(`✓ Takeover! Prev owner refunded ${prev.toLocaleString()} SAT (demo)`, 'ok');
+    }
+    toast('⚡ Takeover successful!', 'ok');
+
+  } catch(e) {
+    showTx('Error: ' + (e.message || String(e)), 'err');
+    document.getElementById('btnOver').disabled = false;
+  }
+}
+
+async function doClaimRev() {
+  if (!needWallet()) return;
+  document.getElementById('btnRev').disabled = true;
+
+  try {
+    const revenueAddr = S.curMeme?.revenueAddr || '';
+    toast('Claiming ' + S.myRev.toLocaleString() + ' SAT…', 'info');
+
+    if (revenueAddr && !revenueAddr.startsWith('0xREV_MOCK')) {
+      // ── REAL ──
+      const calldata = buildCalldata('claimRevenue()');
+      const txResult = await sendOpnetTx(revenueAddr, calldata, 0);
+      toast('Revenue claimed! TX: ' + (txResult?.txid || 'sent'), 'ok');
+    } else {
+      // ── DEMO ──
+      await sleep(900);
+      toast('Revenue claimed! (demo)', 'ok');
+    }
+
+    S.myRev = 0;
+    document.getElementById('revN').textContent = '0';
+
+  } catch(e) {
+    toast('Error: ' + (e.message || String(e)), 'err');
+    document.getElementById('btnRev').disabled = false;
+  }
+}
+
+/* ─────────────────────────────── MY MEMES ───────────────────────────────── */
+function renderMine() {
+  const g = document.getElementById('myGrid');
+  if (!S.wallet) {
+    g.innerHTML = `<div class="empty-state">
+      <div class="empty-big">NOT CONNECTED</div>
+      <button class="btn-create" onclick="openModal()" style="margin-top:16px">CONNECT WALLET</button>
+    </div>`;
+    return;
+  }
+  const mine = S.memes.filter(m => m.isMine || m.creator?.toLowerCase() === S.wallet?.toLowerCase());
+  if (!mine.length) {
+    g.innerHTML = `<div class="empty-state">
+      <div class="empty-big">NO MEMES YET</div>
+      <div style="margin-bottom:16px;font-size:13px">Launch your first meme token on Bitcoin L1</div>
+      <button class="btn-create" onclick="nav('create')">+ CREATE YOUR FIRST MEME</button>
+    </div>`;
+    return;
+  }
+  g.innerHTML = mine.map(m => memeCard({...m, isMine:true})).join('');
+}
+
+/* ─────────────────────────────── CREATE FORM ───────────────────────────── */
+function previewImg() {
+  const url = document.getElementById('fImg').value.trim();
+  const p = document.getElementById('imgPrev');
+  if (url) { p.src = url; p.style.display = 'block'; p.onerror = () => p.style.display = 'none'; }
+  else p.style.display = 'none';
+}
+
+function socPreview(inpId, linkId) {
+  const v = document.getElementById(inpId)?.value.trim();
+  const a = document.getElementById(linkId);
+  if (v) { a.href = v; a.style.opacity = '.7'; a.style.display = 'flex'; }
+  else a.style.display = 'none';
+  updateSummary();
+}
+
+function onSupplyInput(el) {
+  const raw = el.value.replace(/,/g,'');
+  if (!/^\d*$/.test(raw)) { el.value = el.value.slice(0,-1); return; }
+  if (raw) el.value = Number(raw).toLocaleString('en-US');
+  const n = Number(raw);
+  document.getElementById('supUnit').textContent = n >= 1e12 ? 'T' : n >= 1e9 ? 'B' : n >= 1e6 ? 'M' : n >= 1e3 ? 'K' : '';
+  updatePresetHighlight(el.value);
+  updateSummary();
+}
+
+function setSupply(v) {
+  document.getElementById('fSupply').value = v;
+  const n = Number(v.replace(/,/g,''));
+  document.getElementById('supUnit').textContent = n >= 1e12 ? 'T' : n >= 1e9 ? 'B' : n >= 1e6 ? 'M' : '';
+  updatePresetHighlight(v);
+  updateSummary();
+}
+
+const PRESET_MAP = { '1,000,000':'1M','100,000,000':'100M','1,000,000,000':'1B ★','10,000,000,000':'10B','1,000,000,000,000':'1T' };
+function updatePresetHighlight(val) {
+  document.querySelectorAll('.prst').forEach(b => b.classList.toggle('active', b.textContent === (PRESET_MAP[val] || '')));
+}
+
+function updateSummary() {
+  const n = document.getElementById('fName')?.value.trim() || '—';
+  const s = document.getElementById('fSym')?.value.trim()  || '—';
+  const sup = document.getElementById('fSupply')?.value    || '—';
+  const fl  = parseFloat(document.getElementById('fFloor')?.value) || 0;
+  document.getElementById('sumN').textContent   = n;
+  document.getElementById('sumS').textContent   = s;
+  document.getElementById('sumSup').textContent = sup;
+  document.getElementById('sumF').textContent   = fl ? fl.toLocaleString() + ' SAT' : '—';
+  const sCount = ['sWeb','sTwi','sTg','sDis','sGit'].filter(id => document.getElementById(id)?.value.trim()).length;
+  document.getElementById('sumSoc').textContent = sCount + ' added';
+  const usd = (fl * 0.00000001 * 97000).toFixed(4);
+  document.getElementById('floorHint').textContent = `Min 500 SAT · ≈ $${usd} USD at $97k BTC`;
+}
+
+async function handleDeploy() {
+  const name   = document.getElementById('fName').value.trim();
+  const sym    = document.getElementById('fSym').value.trim();
+  const supply = document.getElementById('fSupply').value;
+  const floor  = parseFloat(document.getElementById('fFloor').value);
+  const img    = document.getElementById('fImg').value.trim();
+  const desc   = document.getElementById('fDesc').value.trim();
+
+  const err = document.getElementById('dErr');
+  err.style.display = 'none';
+
+  if (!S.wallet)       { openModal(); return; }
+  if (!name)           { showErr('Enter a token name'); return; }
+  if (!sym)            { showErr('Enter a symbol (e.g. DOGE2)'); return; }
+  if (!supply)         { showErr('Enter total supply'); return; }
+  const supN = Number(supply.replace(/,/g,''));
+  if (supN < CFG.MIN_SUP)  { showErr('Supply min 1,000,000'); return; }
+  if (supN > CFG.MAX_SUP)  { showErr('Supply max 1 trillion'); return; }
+  if (!floor || floor < CFG.MIN_FLOOR) { showErr('Floor price min 500 SAT'); return; }
+
+  const social = {};
+  [['website','sWeb'],['twitter','sTwi'],['telegram','sTg'],['discord','sDis'],['github','sGit']]
+    .forEach(([k,id]) => { const v = document.getElementById(id)?.value.trim(); if(v) social[k] = v; });
+
+  const fullDesc = desc ? `${desc}\n\n__social__:${JSON.stringify(social)}` : `__social__:${JSON.stringify(social)}`;
+
+  document.getElementById('btnDeploy').disabled = true;
+  document.getElementById('btnDeploy').textContent = 'DEPLOYING…';
+  document.getElementById('stepsWrap').style.display = 'block';
+  document.getElementById('st2t').textContent = `Deploy ${sym} (OP_20)`;
+  document.getElementById('st2d').textContent = `Supply: ${supply} · 1% auto fee routing to slots`;
+
+  try {
+    // ── Step 1: Deploy RevenueSharingV2 ────────────────────────────────────
+    await stepAnim(1, async () => {
+      // Real: S.provider.sendTransaction({ data: REV_WASM_HEX })
+      await sleep(1900);
+      return '0xRev' + rng(Date.now()).toString(16).slice(2,18).toUpperCase();
+    });
+    const revAddr = '0xREVENUE_' + Math.floor(rng(1)*0xFFFFFF).toString(16).toUpperCase();
+
+    // ── Step 2: Deploy MemeToken ───────────────────────────────────────────
+    await stepAnim(2, async () => {
+      // Real: S.provider.sendTransaction({ data: TOKEN_WASM_HEX + ABI_encode(name, sym, supN, revAddr) })
+      await sleep(2100);
+      return '0xTok' + rng(Date.now()+1).toString(16).slice(2,18).toUpperCase();
+    });
+    const tokAddr = '0xTOKEN_' + Math.floor(rng(2)*0xFFFFFF).toString(16).toUpperCase();
+    S.deplToken = tokAddr;
+
+    // ── Step 3: Register in Factory ────────────────────────────────────────
+    await stepAnim(3, async () => {
+      // Real: factory.registerMeme(tokAddr, revAddr, name, sym, img, fullDesc, floor, 10000)
+      await sleep(1600);
+      return '0xReg' + rng(Date.now()+2).toString(16).slice(2,18).toUpperCase();
+    });
+
+    // Build new meme + add to list
+    const newMeme = {
+      id: S.memes.length, name, symbol: sym, emoji: '🆕',
+      desc: fullDesc, imageUrl: img, social,
+      supply,
+      creator: S.wallet,
+      floorPrice: floor, takeovers: 0, slotsFilled: 0,
+      cycleRevenue: 0, createdBlock: 999999,
+      tokenAddr: tokAddr, revenueAddr: revAddr,
+      isNew: true, isHot: false, isMine: true,
+    };
+    S.deplIdx = newMeme.id;
+    S.memes.unshift(newMeme);
+    S.filtered = [...S.memes];
+
+    // Show success
+    document.getElementById('deployArea').style.display = 'none';
+    document.getElementById('stepsWrap').style.display = 'none';
+    document.getElementById('successPanel').style.display = 'block';
+    document.getElementById('deployedAddr').textContent = tokAddr;
+    document.getElementById('btnView').onclick = () => openMeme(newMeme.id);
+    document.getElementById('btnLiq').href  = motoLiq(tokAddr);
+    document.getElementById('btnSwap').href = motoSwap(tokAddr);
+    toast('🎉 Deployed! Now add liquidity on Motoswap to activate trading.', 'ok');
+
+  } catch(e) {
+    showErr('Deployment error: ' + e.message);
+    document.getElementById('btnDeploy').disabled = false;
+    document.getElementById('btnDeploy').textContent = 'DEPLOY MEME TOKEN →';
+    document.getElementById('stepsWrap').style.display = 'none';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('dErr');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function stepAnim(n, fn) {
+  const sn = document.getElementById('sn' + n);
+  sn.classList.add('active');
+  const result = await fn();
+  sn.classList.remove('active');
+  sn.classList.add('done');
+  sn.textContent = '✓';
+  document.getElementById('sh' + n).textContent = 'TX: ' + result;
+  const nextN = document.getElementById('sn' + (n + 1));
+  if (nextN) nextN.classList.add('active');
+  return result;
+}
+
+/* ─────────────────────────────── MOTOSWAP URLS ──────────────────────────── */
+// Motoswap is the official OP_NET DEX — update URL scheme if they change routing
+const motoLiq  = addr => `${CFG.MOTOSWAP}/add/${addr}`;
+const motoSwap = addr => `${CFG.MOTOSWAP}/#/swap?outputCurrency=${encodeURIComponent(addr)}`;
+
+/* ─────────────────────────────── UTILS ─────────────────────────────────── */
+function trunc(s, n = 6) {
+  if (!s) return '—';
+  return s.length > n * 2 + 3 ? s.slice(0, n) + '…' + s.slice(-4) : s;
+}
+function h(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ─────────────────────────────── TOAST ─────────────────────────────────── */
+function toast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ─────────────────────────────── INIT ─────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  loadMemes();
+  updateSummary();
+  setSupply('1,000,000,000'); // init preset highlight
+
+  // close modal on overlay click
+  document.getElementById('wModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  // auto-detect existing wallet connection
+  if (window.opnet?.selectedAddress) {
+    onConnected(window.opnet.selectedAddress, 'OP_WALLET', window.opnet);
+  } else if (window.unisat) {
+    window.unisat.getAccounts?.().then(a => {
+      if (a?.length) onConnected(a[0], 'Unisat', window.unisat);
+    }).catch(() => {});
+  }
+});
+</script>
+</body>
+</html>

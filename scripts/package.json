@@ -1,0 +1,14 @@
+{
+  "name": "memeslots-deploy",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy:factory": "node deploy-factory.mjs"
+  },
+  "dependencies": {
+    "@btc-vision/bitcoin":     "latest",
+    "@btc-vision/transaction": "latest",
+    "opnet":                   "latest"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "memeslots-contracts",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build:factory": "asc assembly/contracts/MemeFactoryV2.ts   --target release --outFile build/MemeFactoryV2.wasm   --exportRuntime --optimizeLevel 3",
+    "build:revenue": "asc assembly/contracts/RevenueSharingV2.ts --target release --outFile build/RevenueSharingV2.wasm --exportRuntime --optimizeLevel 3",
+    "build:token":   "asc assembly/contracts/MemeToken.ts         --target release --outFile build/MemeToken.wasm         --exportRuntime --optimizeLevel 3",
+    "build:all":     "mkdir -p build && npm run build:factory && npm run build:revenue && npm run build:token",
+    "wasm2hex":      "node -e \"const fs=require('fs');['MemeFactoryV2','RevenueSharingV2','MemeToken'].forEach(n=>{const b=fs.readFileSync('./build/'+n+'.wasm');fs.writeFileSync('./build/'+n+'.hex',b.toString('hex'));console.log(n+': '+b.length+' bytes');})\""
+  },
+  "dependencies": {
+    "@btc-vision/btc-runtime": "latest",
+    "as-bignum":               "latest"
+  },
+  "devDependencies": {
+    "assemblyscript": "latest"
+  }
+}
