@@ -1,8 +1,3 @@
-nano /workspaces/MMMM/scripts/deploy-factory.mjs
-```
-
-Paste toàn bộ code này vào (copy từ dòng đầu đến dòng cuối):
-```
 import { JSONRpcProvider, DeploymentTransaction, UTXOsManager } from "opnet";
 import { Wallet } from "@btc-vision/transaction";
 import { networks, initEccLib } from "@btc-vision/bitcoin";
