@@ -1,5 +1,5 @@
 import { JSONRpcProvider, DeploymentTransaction } from "opnet";
-import { EcKeyPair } from "@btc-vision/transaction";
+import { Wallet } from "@btc-vision/transaction";
 import { networks, initEccLib } from "@btc-vision/bitcoin";
 import * as ecc from "@bitcoinerlab/secp256k1";
 import fs from "fs";
@@ -20,11 +20,14 @@ console.log("RPC     : " + RPC_URL);
 
 const provider = new JSONRpcProvider(RPC_URL, NETWORK);
 
-let keypair;
-try { keypair = EcKeyPair.fromWIF(PRIVATE_KEY, NETWORK); }
-catch (e) { console.error("Cannot read PRIVATE_KEY: " + e.message); process.exit(1); }
+const QUANTUM_KEY = process.env.QUANTUM_KEY;
 
-const address = EcKeyPair.getTaprootAddress(keypair, NETWORK);
+let wallet;
+try { wallet = Wallet.fromWif(PRIVATE_KEY, QUANTUM_KEY, NETWORK); }
+catch (e) { console.error("Cannot read keys: " + e.message); process.exit(1); }
+
+const keypair = wallet;
+const address = wallet.p2tr;
 const treasury = TREASURY || address;
 console.log("Deployer: " + address);
 
