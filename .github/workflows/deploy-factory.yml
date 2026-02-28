@@ -1,0 +1,22 @@
+name: Deploy Factory to OP_NET
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network (testnet/mainnet)'
+        required: true
+        default: 'testnet'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: cd contracts && npm install
+      - run: cd scripts && npm install
+      - run: cd scripts && node deploy-factory.mjs
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          NETWORK: ${{ github.event.inputs.network }}
