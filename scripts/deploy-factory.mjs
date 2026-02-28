@@ -34,7 +34,7 @@ console.log(`Network : ${NETWORK_STR.toUpperCase()}`);
 console.log(`RPC     : ${RPC_URL}`);
 
 const provider = new JSONRpcProvider(RPC_URL, NETWORK);
-const wallet   = Wallet.fromWIF(PRIVATE_KEY, NETWORK);
+const wallet   = Wallet.fromWif(PRIVATE_KEY, NETWORK);
 const address  = wallet.p2tr;
 const treasury = TREASURY || address;
 
