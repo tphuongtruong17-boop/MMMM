@@ -24,6 +24,7 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           NETWORK: ${{ github.event.inputs.network }}
+          MNEMONIC: ${{ secrets.MNEMONIC }}
           QUANTUM_KEY: ${{ secrets.QUANTUM_KEY }}
       - name: Commit updated index.html
         run: |
