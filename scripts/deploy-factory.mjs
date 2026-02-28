@@ -41,7 +41,7 @@ let factoryAddress;
 try {
   const deployTx = new DeploymentTransaction({
     signer: keypair, refundTo: address,
-    maximumAllowedSatToSpend: 150000n, feeRate: 10,
+    maximumAllowedSatToSpend: BigInt(150000), feeRate: 10,
     network: NETWORK, bytecode: wasmBytes, calldata: calldata,
   });
   const result = await deployTx.signAndBroadcast(provider);
