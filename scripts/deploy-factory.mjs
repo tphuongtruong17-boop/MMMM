@@ -1,10 +1,8 @@
 import { JSONRpcProvider } from "opnet";
 import { EcKeyPair, TransactionFactory } from "@btc-vision/transaction";
-import { networks, initEccLib, toXOnly, toHex, address as btcAddress } from "@btc-vision/bitcoin";
-import * as ecc from "@bitcoinerlab/secp256k1";
+import { networks, toHex, address as btcAddress } from "@btc-vision/bitcoin";
 import fs from "fs";
 
-initEccLib(ecc);
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const NETWORK_STR = (process.env.NETWORK || "testnet").toLowerCase();
