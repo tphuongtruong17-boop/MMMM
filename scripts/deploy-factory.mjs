@@ -8,7 +8,7 @@
  */
 
 import { JSONRpcProvider, Wallet } from 'opnet';
-import { Network } from '@btc-vision/bitcoin';
+import { NetworkName as Network } from 'opnet';
 import { InteractionTransaction } from '@btc-vision/transaction';
 import fs from 'fs';
 
