@@ -60,5 +60,4 @@ if (fs.existsSync(htmlPath)) {
   if (patched !== html) { fs.writeFileSync(htmlPath, patched); console.log("Patched index.html"); }
 }
 
-fs.appendFileSync(process.env.GITHUB_OUTPUT || "/dev/null", "factory_address=" + factoryAddress + "
-");
+fs.appendFileSync(process.env.GITHUB_OUTPUT || "/dev/null", "factory_address=" + factoryAddress + "\n");
