@@ -1,8 +1,3 @@
-cat /dev/null > /workspaces/MMMM/scripts/deploy-factory.mjs && nano /workspaces/MMMM/scripts/deploy-factory.mjs
-```
-
-Khi nano mở ra, paste nội dung này vào:
-```
 import { JSONRpcProvider } from "opnet";
 import { EcKeyPair, TransactionFactory } from "@btc-vision/transaction";
 import { networks, initEccLib, toXOnly, toHex, address as btcAddress } from "@btc-vision/bitcoin";
