@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const writer = new BinaryWriter();
     writer.writeStringWithLength(name);
     writer.writeStringWithLength(symbol);
-    writer.writeU256(BigInt(supply) * BigInt(10 ** 8));
+    writer.writeU256(BigInt(String(supply).replace(/,/g, "")) * BigInt(10 ** 8));
     writer.writeU256(BigInt(floorPrice || 1000));
     writer.writeAddress(Address.fromString(toHex(btcAddress.toOutputScript(address, NETWORK).subarray(2, 34))));
     const calldata = writer.getBuffer();
