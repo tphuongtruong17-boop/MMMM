@@ -11,7 +11,7 @@ import {
   StoredU256,
   AddressMemoryMap,
 } from '@btc-vision/btc-runtime/runtime';
-import { u128, u256 } from 'as-bignum/assembly';
+import { u128, u256 } from '@btc-vision/as-bignum/assembly';
 
 // ─── Events ───────────────────────────────────────────────────────────────────
 
