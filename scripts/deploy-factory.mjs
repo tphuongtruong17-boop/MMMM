@@ -70,17 +70,10 @@ console.log(`WASM    : ${wasmBytes.length.toLocaleString()} bytes\n`);
 // ── Encode treasury address làm calldata constructor ─────────────────────────
 // OP_NET calldata: address được encode thành 32 bytes
 function encodeP2trAddress(addr) {
-  // Dùng @btc-vision/transaction để encode đúng chuẩn OP_NET
-  try {
-    const { Address } = await import('@btc-vision/transaction');
-    const a = new Address(addr);
-    return Buffer.from(a.toBytes());
-  } catch {
-    // Fallback: encode UTF-8 padded
-    const b = Buffer.alloc(32);
-    Buffer.from(addr, 'utf8').copy(b, 0, 0, Math.min(32, addr.length));
-    return b;
-  }
+  // Encode UTF-8 padded 32 bytes
+  const b = Buffer.alloc(32);
+  Buffer.from(addr, 'utf8').copy(b, 0, 0, Math.min(32, addr.length));
+  return b;
 }
 
 const calldata = await encodeP2trAddress(treasury);
