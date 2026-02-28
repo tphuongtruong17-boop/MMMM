@@ -23,7 +23,7 @@ if (!PRIVATE_KEY) {
   process.exit(1);
 }
 
-const NETWORK = NETWORK_STR === 'mainnet' ? Network.MAINNET : Network.TESTNET;
+const NETWORK = NETWORK_STR === 'mainnet' ? WalletNetworks.mainnet : WalletNetworks.testnet;
 const RPC_URL = NETWORK_STR === 'mainnet'
   ? 'https://mainnet.opnet.org'
   : 'https://testnet.opnet.org';
