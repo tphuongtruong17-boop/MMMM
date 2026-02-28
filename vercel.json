@@ -1,27 +1,13 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/*.js",
-      "use": "@vercel/node"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "src": "web/index.html",
-      "use": "@vercel/static"
+      "source": "/(.*)",
+      "destination": "/web/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/web/index.html"
-    }
-  ],
-  "env": {
-    "MNEMONIC": "@mnemonic",
-    "QUANTUM_KEY": "@quantum_key"
-  }
+  ]
 }
