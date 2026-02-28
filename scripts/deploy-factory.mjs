@@ -27,7 +27,7 @@ let wallet;
 try { wallet = Wallet.fromPrivateKeys(PRIVATE_KEY, QUANTUM_KEY, NETWORK); }
 catch (e) { console.error("Cannot read keys: " + e.message); process.exit(1); }
 
-const address = wallet.p2tr;
+const address = wallet._address.p2op(NETWORK) || wallet.p2tr;
 const treasury = TREASURY || address;
 console.log("Deployer: " + address);
 
