@@ -3,7 +3,7 @@ import {
   Blockchain,
   BytesWriter,
   Calldata,
-  DeployableOP_20,
+  OP20,
   encodeSelector,
   OP20InitParameters,
   Selector,
@@ -43,7 +43,7 @@ class TransferWithFeeEvent extends NetEvent {
 // - Tổng supply: 1 tỷ token (18 decimals)
 
 @final
-export class MemeToken extends DeployableOP_20 {
+export class MemeToken extends OP20 {
   // Pointers cho storage
   private static readonly REVENUE_CONTRACT_POINTER: u16 = 100;
   private static readonly TOTAL_FEES_POINTER: u16 = 101;
