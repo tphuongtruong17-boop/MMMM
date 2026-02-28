@@ -7,8 +7,9 @@
  *   TREASURY      — địa chỉ nhận phí (optional, default = deployer)
  */
 
-import { JSONRpcProvider, NetworkName as Network } from 'opnet';
-import { Wallet, WalletNetworks } from '@btc-vision/transaction';
+import { JSONRpcProvider } from 'opnet';
+import { networks } from '@btc-vision/bitcoin';
+import { Wallet } from '@btc-vision/transaction';
 import { InteractionTransaction } from '@btc-vision/transaction';
 import fs from 'fs';
 
@@ -23,7 +24,7 @@ if (!PRIVATE_KEY) {
   process.exit(1);
 }
 
-const NETWORK = NETWORK_STR === 'mainnet' ? WalletNetworks.mainnet : WalletNetworks.testnet;
+const NETWORK = NETWORK_STR === 'mainnet' ? networks.bitcoin : networks.testnet;
 const RPC_URL = NETWORK_STR === 'mainnet'
   ? 'https://mainnet.opnet.org'
   : 'https://testnet.opnet.org';
