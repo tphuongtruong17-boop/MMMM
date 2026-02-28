@@ -1,4 +1,4 @@
-import { JSONRpcProvider, DeploymentTransaction } from "opnet";
+import { JSONRpcProvider, DeploymentTransaction, UTXOsManager } from "opnet";
 import { Wallet } from "@btc-vision/transaction";
 import { networks, initEccLib } from "@btc-vision/bitcoin";
 import * as ecc from "@bitcoinerlab/secp256k1";
@@ -38,12 +38,16 @@ console.log("WASM    : " + wasmBytes.length + " bytes");
 const calldata = Buffer.alloc(32);
 Buffer.from(treasury, "utf8").copy(calldata, 0, 0, Math.min(32, treasury.length));
 
+const utxoManager = new UTXOsManager(provider);
+const utxos = await utxoManager.getUTXOs({ address });
+console.log("UTXOs   : " + utxos.length);
+
 console.log("Deploying MemeFactoryV2...");
 
 let factoryAddress;
 try {
   const deployTx = new DeploymentTransaction({
-    signer: keypair, refundTo: address,
+    signer: wallet, refundTo: address, utxos: utxos,
     maximumAllowedSatToSpend: BigInt(150000), feeRate: 10,
     network: NETWORK, bytecode: wasmBytes, calldata: calldata,
   });
