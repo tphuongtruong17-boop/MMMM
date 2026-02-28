@@ -1,6 +1,12 @@
 {
+  "name": "memeslots-api",
+  "version": "1.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=20.0.0"
+  "dependencies": {
+    "@btc-vision/bitcoin": "^7.0.0-rc.5",
+    "@btc-vision/transaction": "^1.8.0-rc.7",
+    "@btc-vision/bip32": "^7.1.2",
+    "@btc-vision/ecpair": "^4.0.5",
+    "opnet": "^1.8.1-rc.9"
   }
 }
