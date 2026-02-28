@@ -1255,29 +1255,22 @@ async function handleDeploy() {
   document.getElementById('st2d').textContent = `Supply: ${supply} · 1% auto fee routing to slots`;
 
   try {
-    // ── Step 1: Deploy RevenueSharingV2 ────────────────────────────────────
+    // ── Deploy via backend API ─────────────────────────────────────────────
+    let tokAddr, revAddr;
     await stepAnim(1, async () => {
-      // Real: S.provider.sendTransaction({ data: REV_WASM_HEX })
-      await sleep(1900);
-      return '0xRev' + rng(Date.now()).toString(16).slice(2,18).toUpperCase();
+      const resp = await fetch('/api/deploy-token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, symbol: sym, supply, floorPrice: floor, treasury: S.wallet})
+      });
+      const data = await resp.json();
+      tokAddr = data.contractAddress;
+      revAddr = data.revenueAddress || tokAddr;
+      S.deplToken = tokAddr;
+      return tokAddr;
     });
-    const revAddr = '0xREVENUE_' + Math.floor(rng(1)*0xFFFFFF).toString(16).toUpperCase();
-
-    // ── Step 2: Deploy MemeToken ───────────────────────────────────────────
-    await stepAnim(2, async () => {
-      // Real: S.provider.sendTransaction({ data: TOKEN_WASM_HEX + ABI_encode(name, sym, supN, revAddr) })
-      await sleep(2100);
-      return '0xTok' + rng(Date.now()+1).toString(16).slice(2,18).toUpperCase();
-    });
-    const tokAddr = '0xTOKEN_' + Math.floor(rng(2)*0xFFFFFF).toString(16).toUpperCase();
-    S.deplToken = tokAddr;
-
-    // ── Step 3: Register in Factory ────────────────────────────────────────
-    await stepAnim(3, async () => {
-      // Real: factory.registerMeme(tokAddr, revAddr, name, sym, img, fullDesc, floor, 10000)
-      await sleep(1600);
-      return '0xReg' + rng(Date.now()+2).toString(16).slice(2,18).toUpperCase();
-    });
+    await stepAnim(2, async () => tokAddr);
+    await stepAnim(3, async () => tokAddr);
 
     // Build new meme + add to list
     const newMeme = {
