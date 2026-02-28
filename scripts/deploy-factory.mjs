@@ -39,7 +39,12 @@ const calldata = Buffer.alloc(32);
 Buffer.from(treasury, "utf8").copy(calldata, 0, 0, Math.min(32, treasury.length));
 
 const utxoManager = new UTXOsManager(provider);
-const utxos = await utxoManager.getUTXOs({ address });
+// Thử cả tb1p và opt1p format
+let utxos = await utxoManager.getUTXOs({ address });
+  const opnetAddress = address.replace("tb1p", "opt1p");
+  console.log("Trying OP_NET address: " + opnetAddress);
+  utxos = await utxoManager.getUTXOs({ address: opnetAddress });
+}
 console.log("UTXOs   : " + utxos.length);
 
 console.log("Deploying MemeFactoryV2...");
