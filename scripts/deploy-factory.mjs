@@ -7,8 +7,8 @@
  *   TREASURY      — địa chỉ nhận phí (optional, default = deployer)
  */
 
-import { JSONRpcProvider, Wallet } from 'opnet';
-import { NetworkName as Network } from 'opnet';
+import { JSONRpcProvider, NetworkName as Network } from 'opnet';
+import { Wallet } from '@btc-vision/transaction';
 import { InteractionTransaction } from '@btc-vision/transaction';
 import fs from 'fs';
 
