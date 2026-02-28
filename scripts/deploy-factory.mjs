@@ -8,7 +8,9 @@
  */
 
 import { JSONRpcProvider } from 'opnet';
-import { networks } from '@btc-vision/bitcoin';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { networks } = require('./node_modules/ecpair/src/networks.js');
 import { Wallet } from '@btc-vision/transaction';
 import { InteractionTransaction } from '@btc-vision/transaction';
 import fs from 'fs';
