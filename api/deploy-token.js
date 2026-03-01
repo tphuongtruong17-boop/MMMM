@@ -29,21 +29,35 @@ export default async function handler(req, res) {
     writer.writeU256(BigInt(floorPrice || 1000));
     writer.writeAddress(Address.fromString(toHex(btcAddress.toOutputScript(address, NETWORK).subarray(2, 34))));
     const calldata = writer.getBuffer();
-    const wasmPath = path.join(__dirname, "..", "contracts", "build", "MemeToken.wasm");
-    const wasmBytes = new Uint8Array(fs.readFileSync(wasmPath));
-    const challenge = await provider.getChallenge();
-    const factory = new TransactionFactory();
-    const deployment = await factory.signDeployment({
-      from: address, utxos,
-      signer: wallet.keypair, mldsaSigner: wallet.mldsaKeypair,
+    // Step 1: Deploy RevenueSharingV2
+    const revWasm = new Uint8Array(fs.readFileSync(path.join(__dirname, "..", "contracts", "build", "RevenueSharingV2.wasm")));
+    const revChallenge = await provider.getChallenge();
+    const txFactory = new TransactionFactory();
+    const revDeploy = await txFactory.signDeployment({
+      from: address, utxos, signer: wallet.keypair, mldsaSigner: wallet.mldsaKeypair,
       network: NETWORK, feeRate: 10, priorityFee: 0n, gasSatFee: BigInt(20000),
-      bytecode: wasmBytes, calldata: new Uint8Array(calldata), challenge,
+      bytecode: revWasm, calldata: new Uint8Array(0), challenge: revChallenge,
       linkMLDSAPublicKeyToAddress: true, revealMLDSAPublicKey: true,
     });
-    const funding = await provider.sendRawTransaction(deployment.transaction[0], false);
-    const reveal = await provider.sendRawTransaction(deployment.transaction[1], false);
+    const revFunding = await provider.sendRawTransaction(revDeploy.transaction[0], false);
+    const revReveal = await provider.sendRawTransaction(revDeploy.transaction[1], false);
+    const revenueAddress = revDeploy.contractAddress;
+
+    // Step 2: Deploy MemeToken
+    const tokWasm = new Uint8Array(fs.readFileSync(path.join(__dirname, "..", "contracts", "build", "MemeToken.wasm")));
+    const tokChallenge = await provider.getChallenge();
+    const tokDeploy = await txFactory.signDeployment({
+      from: address, utxos: revDeploy.utxos, signer: wallet.keypair, mldsaSigner: wallet.mldsaKeypair,
+      network: NETWORK, feeRate: 10, priorityFee: 0n, gasSatFee: BigInt(20000),
+      bytecode: tokWasm, calldata: new Uint8Array(calldata), challenge: tokChallenge,
+      linkMLDSAPublicKeyToAddress: true, revealMLDSAPublicKey: true,
+    });
+    const tokFunding = await provider.sendRawTransaction(tokDeploy.transaction[0], false);
+    const tokReveal = await provider.sendRawTransaction(tokDeploy.transaction[1], false);
+    const tokenAddress = tokDeploy.contractAddress;
+
     await provider.close();
-    res.status(200).json({ success: true, contractAddress: deployment.contractAddress });
+    res.status(200).json({ success: true, contractAddress: tokenAddress, revenueAddress });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message });
